@@ -14,7 +14,10 @@ resource "aws_cloudwatch_composite_alarm" "this" {
   alarm_actions             = each.value.alarm_actions
   ok_actions                = each.value.ok_actions
   insufficient_data_actions = each.value.insufficient_data_actions
-  alarm_rule                = each.value.alarm_rule
+  alarm_rule = each.value.alarm_rule != null ? each.value.alarm_rule : join(
+    " ${each.value.metric_alarm_keys_operator} ",
+    [for key in each.value.metric_alarm_keys : "ALARM(\"${aws_cloudwatch_metric_alarm.this[key].arn}\")"]
+  )
 
   dynamic "actions_suppressor" {
     for_each = each.value.actions_suppressor != null ? [each.value.actions_suppressor] : []
