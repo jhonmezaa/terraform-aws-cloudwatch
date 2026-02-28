@@ -131,54 +131,54 @@ module "cloudwatch" {
 
 Resources follow the monorepo naming convention:
 
-| Resource | Pattern | Example |
-|---|---|---|
-| Log Group | `/aws/{account_name}/{project_name}/{key}` | `/aws/prod/myapp/application` |
-| Metric Alarm | `{region_prefix}-cw-alarm-{account_name}-{project_name}-{key}` | `ause1-cw-alarm-prod-myapp-high-cpu` |
+| Resource        | Pattern                                                            | Example                                        |
+| --------------- | ------------------------------------------------------------------ | ---------------------------------------------- |
+| Log Group       | `/aws/{account_name}/{project_name}/{key}`                         | `/aws/prod/myapp/application`                  |
+| Metric Alarm    | `{region_prefix}-cw-alarm-{account_name}-{project_name}-{key}`     | `ause1-cw-alarm-prod-myapp-high-cpu`           |
 | Composite Alarm | `{region_prefix}-cw-composite-{account_name}-{project_name}-{key}` | `ause1-cw-composite-prod-myapp-service-health` |
-| Dashboard | `{region_prefix}-cw-dash-{account_name}-{project_name}-{key}` | `ause1-cw-dash-prod-myapp-operations` |
+| Dashboard       | `{region_prefix}-cw-dash-{account_name}-{project_name}-{key}`      | `ause1-cw-dash-prod-myapp-operations`          |
 
 All names can be overridden per resource using the `name`, `alarm_name`, or `dashboard_name` attributes.
 
 ## Requirements
 
-| Name | Version |
-|---|---|
-| terraform | ~> 1.0 |
-| aws | ~> 6.0 |
+| Name      | Version |
+| --------- | ------- |
+| terraform | ~> 1.0  |
+| aws       | ~> 6.0  |
 
 ## Inputs
 
-| Name | Description | Type | Default | Required |
-|---|---|---|---|---|
-| account_name | Account name for resource naming | `string` | n/a | yes |
-| project_name | Project name for resource naming | `string` | n/a | yes |
-| create | Whether to create CloudWatch resources | `bool` | `true` | no |
-| region_prefix | Region prefix override | `string` | `null` | no |
-| use_region_prefix | Include region prefix in names | `bool` | `true` | no |
-| tags | Additional tags for all resources | `map(string)` | `{}` | no |
-| log_groups | Map of log group configurations | `map(object)` | `{}` | no |
-| metric_filters | Map of metric filter configurations | `map(object)` | `{}` | no |
-| metric_alarms | Map of metric alarm configurations | `map(object)` | `{}` | no |
-| composite_alarms | Map of composite alarm configurations | `map(object)` | `{}` | no |
-| subscription_filters | Map of subscription filter configurations | `map(object)` | `{}` | no |
-| query_definitions | Map of query definition configurations | `map(object)` | `{}` | no |
-| dashboards | Map of dashboard configurations | `map(object)` | `{}` | no |
+| Name                 | Description                               | Type          | Default | Required |
+| -------------------- | ----------------------------------------- | ------------- | ------- | -------- |
+| account_name         | Account name for resource naming          | `string`      | n/a     | yes      |
+| project_name         | Project name for resource naming          | `string`      | n/a     | yes      |
+| create               | Whether to create CloudWatch resources    | `bool`        | `true`  | no       |
+| region_prefix        | Region prefix override                    | `string`      | `null`  | no       |
+| use_region_prefix    | Include region prefix in names            | `bool`        | `true`  | no       |
+| tags                 | Additional tags for all resources         | `map(string)` | `{}`    | no       |
+| log_groups           | Map of log group configurations           | `map(object)` | `{}`    | no       |
+| metric_filters       | Map of metric filter configurations       | `map(object)` | `{}`    | no       |
+| metric_alarms        | Map of metric alarm configurations        | `map(object)` | `{}`    | no       |
+| composite_alarms     | Map of composite alarm configurations     | `map(object)` | `{}`    | no       |
+| subscription_filters | Map of subscription filter configurations | `map(object)` | `{}`    | no       |
+| query_definitions    | Map of query definition configurations    | `map(object)` | `{}`    | no       |
+| dashboards           | Map of dashboard configurations           | `map(object)` | `{}`    | no       |
 
 ## Outputs
 
-| Name | Description |
-|---|---|
-| log_group_names | Map of log group keys to names |
-| log_group_arns | Map of log group keys to ARNs |
-| metric_filter_ids | Map of metric filter keys to IDs |
-| metric_alarm_arns | Map of metric alarm keys to ARNs |
-| metric_alarm_ids | Map of metric alarm keys to IDs |
-| composite_alarm_arns | Map of composite alarm keys to ARNs |
-| composite_alarm_ids | Map of composite alarm keys to IDs |
+| Name                      | Description                              |
+| ------------------------- | ---------------------------------------- |
+| log_group_names           | Map of log group keys to names           |
+| log_group_arns            | Map of log group keys to ARNs            |
+| metric_filter_ids         | Map of metric filter keys to IDs         |
+| metric_alarm_arns         | Map of metric alarm keys to ARNs         |
+| metric_alarm_ids          | Map of metric alarm keys to IDs          |
+| composite_alarm_arns      | Map of composite alarm keys to ARNs      |
+| composite_alarm_ids       | Map of composite alarm keys to IDs       |
 | subscription_filter_names | Map of subscription filter keys to names |
-| query_definition_ids | Map of query definition keys to IDs |
-| dashboard_arns | Map of dashboard keys to ARNs |
+| query_definition_ids      | Map of query definition keys to IDs      |
+| dashboard_arns            | Map of dashboard keys to ARNs            |
 
 ## Examples
 
