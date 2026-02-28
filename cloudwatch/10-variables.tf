@@ -226,7 +226,10 @@ variable "composite_alarms" {
     Attributes:
       - alarm_name:          (Optional) Override auto-generated alarm name.
       - alarm_description:   (Optional) Description for the composite alarm.
-      - alarm_rule:          (Required) Expression specifying which alarms to evaluate.
+      - alarm_rule:          (Optional) Expression specifying which alarms to evaluate (raw string with full alarm ARNs/names).
+      - metric_alarm_keys:   (Optional) List of metric alarm keys from this module to auto-build the alarm rule.
+      - metric_alarm_keys_operator: (Optional) Logical operator for auto-built rule: "AND" or "OR". Default: "AND".
+      NOTE: Provide either alarm_rule OR metric_alarm_keys, not both.
       - actions_enabled:     (Optional) Execute actions on state change. Default: true.
       - alarm_actions:       (Optional) List of ARNs for ALARM state (up to 5).
       - ok_actions:          (Optional) List of ARNs for OK state (up to 5).
@@ -238,13 +241,15 @@ variable "composite_alarms" {
       - tags:                (Optional) Additional tags for this composite alarm.
   EOT
   type = map(object({
-    alarm_name                = optional(string)
-    alarm_description         = optional(string)
-    alarm_rule                = string
-    actions_enabled           = optional(bool, true)
-    alarm_actions             = optional(list(string))
-    ok_actions                = optional(list(string))
-    insufficient_data_actions = optional(list(string))
+    alarm_name                 = optional(string)
+    alarm_description          = optional(string)
+    alarm_rule                 = optional(string)
+    metric_alarm_keys          = optional(list(string), [])
+    metric_alarm_keys_operator = optional(string, "AND")
+    actions_enabled            = optional(bool, true)
+    alarm_actions              = optional(list(string))
+    ok_actions                 = optional(list(string))
+    insufficient_data_actions  = optional(list(string))
     actions_suppressor = optional(object({
       alarm            = string
       extension_period = number
