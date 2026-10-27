@@ -23,6 +23,23 @@ All notable changes to this project will be documented in this file.
 
 - Update README documentation and CHANGELOG formatting
 
+## [v1.1.1] - 2026-02-28
+
+### Changed
+
+- Update README documentation
+
+## [v1.1.0] - 2026-02-27
+
+### Added
+
+- `metric_alarm_keys` support for composite alarms: reference metric alarms created in the same module instead of hardcoded alarm names/ARNs; the module builds `alarm_rule` from the referenced metric alarm ARNs
+- `metric_alarm_keys_operator` (`AND`/`OR`, default `AND`) to combine the referenced alarms
+
+### Changed
+
+- `alarm_rule` in `composite_alarms` is now optional (provide either `alarm_rule` or `metric_alarm_keys`)
+
 ## [v1.0.0] - 2026-02-27
 
 ### Added
