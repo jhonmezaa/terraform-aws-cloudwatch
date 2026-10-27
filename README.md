@@ -144,8 +144,8 @@ All names can be overridden per resource using the `name`, `alarm_name`, or `das
 
 | Name      | Version |
 | --------- | ------- |
-| terraform | ~> 1.0  |
-| aws       | ~> 6.0  |
+| terraform | >= 1.3  |
+| aws       | >= 6.0  |
 
 ## Inputs
 
