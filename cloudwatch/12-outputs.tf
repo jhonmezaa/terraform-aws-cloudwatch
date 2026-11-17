@@ -95,3 +95,28 @@ output "dashboard_arns" {
     for k, v in aws_cloudwatch_dashboard.this : k => v.dashboard_arn
   }
 }
+
+output "dashboard_names" {
+  description = "Map of dashboard keys to their names."
+  value = {
+    for k, v in aws_cloudwatch_dashboard.this : k => v.dashboard_name
+  }
+}
+
+# =============================================================================
+# Log Stream Outputs
+# =============================================================================
+
+output "log_stream_names" {
+  description = "Map of log stream keys to their names."
+  value = {
+    for k, v in aws_cloudwatch_log_stream.this : k => v.name
+  }
+}
+
+output "log_stream_arns" {
+  description = "Map of log stream keys to their ARNs."
+  value = {
+    for k, v in aws_cloudwatch_log_stream.this : k => v.arn
+  }
+}

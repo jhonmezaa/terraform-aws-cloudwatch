@@ -52,6 +52,9 @@ locals {
   # Name prefix: includes region prefix with trailing dash, or empty string
   name_prefix = var.use_region_prefix ? "${local.region_prefix}-" : ""
 
+  # Common tags (tags is kept as a deprecated alias of tags_common)
+  common_tags = merge(var.tags_common, var.tags)
+
   # =============================================================================
   # Log Group Name Generation
   # =============================================================================
@@ -62,6 +65,11 @@ locals {
         lg.name_prefix != null ? null : "/aws/${var.account_name}/${var.project_name}/${key}"
       )
     )
+  }
+
+  # Value used for the Name tag of each log group
+  log_group_tag_names = {
+    for key, lg in var.log_groups : key => coalesce(lg.name, lg.name_prefix, "/aws/${var.account_name}/${var.project_name}/${key}")
   }
 
   # =============================================================================
@@ -88,6 +96,20 @@ locals {
         sf.log_group_key != null
         ? try(aws_cloudwatch_log_group.this[sf.log_group_key].name, "")
         : sf.log_group_name
+      )
+    })
+  }
+
+  # =============================================================================
+  # Log Stream - Resolve log group references
+  # =============================================================================
+
+  log_streams_resolved = {
+    for key, ls in var.log_streams : key => merge(ls, {
+      resolved_log_group_name = (
+        ls.log_group_key != null
+        ? try(aws_cloudwatch_log_group.this[ls.log_group_key].name, "")
+        : ls.log_group_name
       )
     })
   }

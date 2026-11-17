@@ -16,7 +16,7 @@ resource "aws_cloudwatch_composite_alarm" "this" {
   insufficient_data_actions = each.value.insufficient_data_actions
   alarm_rule = each.value.alarm_rule != null ? each.value.alarm_rule : join(
     " ${each.value.metric_alarm_keys_operator} ",
-    [for key in each.value.metric_alarm_keys : "ALARM(\"${aws_cloudwatch_metric_alarm.this[key].arn}\")"]
+    [for key in each.value.metric_alarm_keys : "ALARM(\"${try(aws_cloudwatch_metric_alarm.this[key].arn, key)}\")"]
   )
 
   dynamic "actions_suppressor" {
@@ -30,7 +30,20 @@ resource "aws_cloudwatch_composite_alarm" "this" {
   }
 
   tags = merge(
-    var.tags,
+    local.common_tags,
     each.value.tags,
+    {
+      Name = each.value.alarm_name != null ? each.value.alarm_name : (
+        "${local.name_prefix}cw-composite-${var.account_name}-${var.project_name}-${each.key}"
+      )
+      ManagedBy = "Terraform"
+    }
   )
+
+  lifecycle {
+    precondition {
+      condition     = alltrue([for key in each.value.metric_alarm_keys : contains(keys(var.metric_alarms), key)])
+      error_message = "Todas las metric_alarm_keys deben existir en var.metric_alarms."
+    }
+  }
 }

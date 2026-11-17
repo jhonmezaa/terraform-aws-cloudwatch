@@ -13,10 +13,11 @@ resource "aws_cloudwatch_log_group" "this" {
   log_group_class   = each.value.log_group_class
 
   tags = merge(
-    var.tags,
+    local.common_tags,
     each.value.tags,
     {
-      Name = each.value.name != null ? each.value.name : "/aws/${var.account_name}/${var.project_name}/${each.key}"
+      Name      = local.log_group_tag_names[each.key]
+      ManagedBy = "Terraform"
     }
   )
 }

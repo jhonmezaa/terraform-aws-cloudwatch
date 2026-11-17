@@ -62,7 +62,13 @@ resource "aws_cloudwatch_metric_alarm" "this" {
   }
 
   tags = merge(
-    var.tags,
+    local.common_tags,
     each.value.tags,
+    {
+      Name = each.value.alarm_name != null ? each.value.alarm_name : (
+        "${local.name_prefix}cw-alarm-${var.account_name}-${var.project_name}-${each.key}"
+      )
+      ManagedBy = "Terraform"
+    }
   )
 }
