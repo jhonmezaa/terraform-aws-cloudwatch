@@ -1,5 +1,5 @@
 provider "aws" {
-  region = "us-east-1"
+  region = var.aws_region
 }
 
 # =============================================================================
@@ -17,8 +17,8 @@ resource "aws_sns_topic" "alerts" {
 module "cloudwatch" {
   source = "../../cloudwatch"
 
-  account_name = "prod"
-  project_name = "ecommerce"
+  account_name = var.account_name
+  project_name = var.project_name
 
   # =============================================================================
   # Log Groups
@@ -45,6 +45,16 @@ module "cloudwatch" {
     ecs = {
       retention_in_days = 14
       log_group_class   = "INFREQUENT_ACCESS"
+    }
+  }
+
+  # =============================================================================
+  # Log Streams
+  # =============================================================================
+
+  log_streams = {
+    app-main = {
+      log_group_key = "application"
     }
   }
 
@@ -160,7 +170,7 @@ module "cloudwatch" {
   composite_alarms = {
     service-health = {
       alarm_description = "Composite alarm: service unhealthy when both CPU and error rate are high"
-      alarm_rule        = "ALARM(\"${module.cloudwatch.metric_alarm_arns["high-error-rate"]}\") AND ALARM(\"${module.cloudwatch.metric_alarm_arns["high-cpu"]}\")"
+      metric_alarm_keys = ["high-error-rate", "high-cpu"]
       alarm_actions     = [aws_sns_topic.alerts.arn]
     }
   }
@@ -174,7 +184,7 @@ module "cloudwatch" {
       name         = "TopErrors"
       query_string = "fields @timestamp, @message | filter @message like /ERROR/ | stats count(*) as errorCount by @message | sort errorCount desc | limit 20"
       log_group_names = [
-        "/aws/prod/ecommerce/application"
+        "/aws/${var.account_name}/${var.project_name}/application"
       ]
     }
 
@@ -203,7 +213,7 @@ module "cloudwatch" {
                 ["Custom/Ecommerce", "ApplicationErrorCount", { stat = "Sum", period = 300 }]
               ]
               title  = "Application Errors"
-              region = "us-east-1"
+              region = var.aws_region
             }
           },
           {
@@ -217,7 +227,7 @@ module "cloudwatch" {
                 ["AWS/EC2", "CPUUtilization", "InstanceId", "i-0123456789abcdef0"]
               ]
               title  = "EC2 CPU Utilization"
-              region = "us-east-1"
+              region = var.aws_region
             }
           }
         ]
@@ -225,7 +235,7 @@ module "cloudwatch" {
     }
   }
 
-  tags = {
+  tags_common = {
     Environment = "prod"
     Team        = "platform"
     Terraform   = "true"
