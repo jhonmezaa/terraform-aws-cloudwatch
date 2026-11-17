@@ -14,12 +14,12 @@ variable "account_name" {
 
   validation {
     condition     = length(var.account_name) > 0 && length(var.account_name) <= 32
-    error_message = "account_name must be between 1 and 32 characters."
+    error_message = "account_name debe tener entre 1 y 32 caracteres."
   }
 
   validation {
     condition     = can(regex("^[a-z0-9-]+$", var.account_name))
-    error_message = "account_name can only contain lowercase letters, numbers, and hyphens."
+    error_message = "account_name solo puede contener letras minúsculas, números y guiones."
   }
 }
 
@@ -29,12 +29,12 @@ variable "project_name" {
 
   validation {
     condition     = length(var.project_name) > 0 && length(var.project_name) <= 32
-    error_message = "project_name must be between 1 and 32 characters."
+    error_message = "project_name debe tener entre 1 y 32 caracteres."
   }
 
   validation {
     condition     = can(regex("^[a-z0-9-]+$", var.project_name))
-    error_message = "project_name can only contain lowercase letters, numbers, and hyphens."
+    error_message = "project_name solo puede contener letras minúsculas, números y guiones."
   }
 }
 
@@ -50,8 +50,14 @@ variable "use_region_prefix" {
   default     = true
 }
 
+variable "tags_common" {
+  description = "Common tags applied to all taggable CloudWatch resources (merged with per-resource tags, Name and ManagedBy)."
+  type        = map(string)
+  default     = {}
+}
+
 variable "tags" {
-  description = "Additional tags to apply to all CloudWatch resources."
+  description = "DEPRECATED: use tags_common. Still merged after tags_common for backward compatibility."
   type        = map(string)
   default     = {}
 }
@@ -93,7 +99,7 @@ variable "log_groups" {
         v.retention_in_days
       )
     ])
-    error_message = "retention_in_days must be one of: 0,1,3,5,7,14,30,60,90,120,150,180,365,400,545,731,1096,1827,2192,2557,2922,3288,3653."
+    error_message = "retention_in_days debe ser uno de: 0,1,3,5,7,14,30,60,90,120,150,180,365,400,545,731,1096,1827,2192,2557,2922,3288,3653."
   }
 
   validation {
@@ -101,7 +107,12 @@ variable "log_groups" {
       for k, v in var.log_groups :
       v.log_group_class == null ? true : contains(["STANDARD", "INFREQUENT_ACCESS"], v.log_group_class)
     ])
-    error_message = "log_group_class must be either STANDARD or INFREQUENT_ACCESS."
+    error_message = "log_group_class debe ser STANDARD o INFREQUENT_ACCESS."
+  }
+
+  validation {
+    condition     = alltrue([for k, v in var.log_groups : !(v.name != null && v.name_prefix != null)])
+    error_message = "name y name_prefix son excluyentes en log_groups."
   }
 }
 
@@ -139,6 +150,13 @@ variable "metric_filters" {
     })
   }))
   default = {}
+
+  validation {
+    condition = alltrue([
+      for k, v in var.metric_filters : v.log_group_key != null || v.log_group_name != null
+    ])
+    error_message = "Cada metric_filter debe definir log_group_key o log_group_name (si se definen ambos, prevalece log_group_key)."
+  }
 }
 
 # =============================================================================
@@ -152,7 +170,7 @@ variable "metric_alarms" {
     Attributes:
       - alarm_name:          (Optional) Override auto-generated alarm name.
       - alarm_description:   (Optional) Description for the alarm.
-      - comparison_operator: (Required) GreaterThanOrEqualToThreshold, GreaterThanThreshold, LessThanThreshold, LessThanOrEqualToThreshold, GreaterThanUpperThreshold, LessThanLowerThreshold.
+      - comparison_operator: (Required) GreaterThanOrEqualToThreshold, GreaterThanThreshold, LessThanThreshold, LessThanOrEqualToThreshold, LessThanLowerOrGreaterThanUpperThreshold, LessThanLowerThreshold, GreaterThanUpperThreshold.
       - evaluation_periods:  (Required) Number of periods over which data is compared.
       - threshold:           (Optional) Value to compare against.
       - threshold_metric_id: (Optional) For anomaly detection, matches the ANOMALY_DETECTION_BAND function ID.
@@ -213,6 +231,37 @@ variable "metric_alarms" {
     tags = optional(map(string), {})
   }))
   default = {}
+
+  validation {
+    condition = alltrue([
+      for k, v in var.metric_alarms : contains([
+        "GreaterThanOrEqualToThreshold", "GreaterThanThreshold", "LessThanThreshold", "LessThanOrEqualToThreshold",
+        "LessThanLowerOrGreaterThanUpperThreshold", "LessThanLowerThreshold", "GreaterThanUpperThreshold",
+      ], v.comparison_operator)
+    ])
+    error_message = "comparison_operator no es válido. Valores: GreaterThanOrEqualToThreshold, GreaterThanThreshold, LessThanThreshold, LessThanOrEqualToThreshold, LessThanLowerOrGreaterThanUpperThreshold, LessThanLowerThreshold, GreaterThanUpperThreshold."
+  }
+
+  validation {
+    condition = alltrue([
+      for k, v in var.metric_alarms : v.treat_missing_data == null ? true : contains(["missing", "ignore", "breaching", "notBreaching"], v.treat_missing_data)
+    ])
+    error_message = "treat_missing_data debe ser missing, ignore, breaching o notBreaching."
+  }
+
+  validation {
+    condition = alltrue([
+      for k, v in var.metric_alarms : !(v.metric_name != null && length(v.metric_query) > 0)
+    ])
+    error_message = "metric_name y metric_query son excluyentes en metric_alarms."
+  }
+
+  validation {
+    condition = alltrue([
+      for k, v in var.metric_alarms : !(v.statistic != null && v.extended_statistic != null)
+    ])
+    error_message = "statistic y extended_statistic son excluyentes en metric_alarms."
+  }
 }
 
 # =============================================================================
@@ -258,6 +307,20 @@ variable "composite_alarms" {
     tags = optional(map(string), {})
   }))
   default = {}
+
+  validation {
+    condition = alltrue([
+      for k, v in var.composite_alarms : (v.alarm_rule != null) != (length(v.metric_alarm_keys) > 0)
+    ])
+    error_message = "Cada composite_alarm debe definir exactamente uno de alarm_rule o metric_alarm_keys."
+  }
+
+  validation {
+    condition = alltrue([
+      for k, v in var.composite_alarms : contains(["AND", "OR"], v.metric_alarm_keys_operator)
+    ])
+    error_message = "metric_alarm_keys_operator debe ser AND u OR."
+  }
 }
 
 # =============================================================================
@@ -285,6 +348,20 @@ variable "subscription_filters" {
     distribution    = optional(string)
   }))
   default = {}
+
+  validation {
+    condition = alltrue([
+      for k, v in var.subscription_filters : v.log_group_key != null || v.log_group_name != null
+    ])
+    error_message = "Cada subscription_filter debe definir log_group_key o log_group_name (si se definen ambos, prevalece log_group_key)."
+  }
+
+  validation {
+    condition = alltrue([
+      for k, v in var.subscription_filters : v.distribution == null ? true : contains(["Random", "ByLogStream"], v.distribution)
+    ])
+    error_message = "distribution debe ser Random o ByLogStream."
+  }
 }
 
 # =============================================================================
@@ -296,12 +373,12 @@ variable "query_definitions" {
     Map of CloudWatch Insights Query Definition configurations.
 
     Attributes:
-      - name:            (Required) Name of the query.
+      - name:            (Optional) Name of the query. Default: {region_prefix}-cw-query-{account_name}-{project_name}-{key}.
       - query_string:    (Required) The query string for CloudWatch Logs Insights.
       - log_group_names: (Optional) List of log group names to associate with the query.
   EOT
   type = map(object({
-    name            = string
+    name            = optional(string)
     query_string    = string
     log_group_names = optional(list(string))
   }))
@@ -325,4 +402,39 @@ variable "dashboards" {
     dashboard_body = string
   }))
   default = {}
+
+  validation {
+    condition = alltrue([
+      for k, v in var.dashboards : can(regex("^[A-Za-z0-9_-]+$", coalesce(v.dashboard_name, k)))
+    ])
+    error_message = "El nombre del dashboard (dashboard_name o la key del mapa) solo puede contener letras, números, guiones y guiones bajos."
+  }
+}
+
+# =============================================================================
+# Log Streams
+# =============================================================================
+
+variable "log_streams" {
+  description = <<-EOT
+    Map of CloudWatch Log Stream configurations.
+
+    Attributes:
+      - name:           (Optional) Log stream name. Default: the map key.
+      - log_group_key:  (Optional) Key from log_groups map to reference a log group created by this module.
+      - log_group_name: (Optional) Name of an external log group. Required if log_group_key is not set.
+  EOT
+  type = map(object({
+    name           = optional(string)
+    log_group_key  = optional(string)
+    log_group_name = optional(string)
+  }))
+  default = {}
+
+  validation {
+    condition = alltrue([
+      for k, v in var.log_streams : (v.log_group_key == null) != (v.log_group_name == null)
+    ])
+    error_message = "Cada log_stream debe definir exactamente uno de log_group_key o log_group_name."
+  }
 }

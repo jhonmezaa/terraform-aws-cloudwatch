@@ -11,4 +11,11 @@ resource "aws_cloudwatch_log_subscription_filter" "this" {
   log_group_name  = local.subscription_filters_resolved[each.key].resolved_log_group_name
   role_arn        = each.value.role_arn
   distribution    = each.value.distribution
+
+  lifecycle {
+    precondition {
+      condition     = each.value.log_group_key == null || contains(keys(var.log_groups), coalesce(each.value.log_group_key, "-"))
+      error_message = "log_group_key \"${coalesce(each.value.log_group_key, "-")}\" no existe en var.log_groups."
+    }
+  }
 }

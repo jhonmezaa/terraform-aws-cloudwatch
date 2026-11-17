@@ -17,4 +17,11 @@ resource "aws_cloudwatch_log_metric_filter" "this" {
     dimensions    = length(each.value.metric_transformation.dimensions) > 0 ? each.value.metric_transformation.dimensions : null
     unit          = each.value.metric_transformation.unit
   }
+
+  lifecycle {
+    precondition {
+      condition     = each.value.log_group_key == null || contains(keys(var.log_groups), coalesce(each.value.log_group_key, "-"))
+      error_message = "log_group_key \"${coalesce(each.value.log_group_key, "-")}\" no existe en var.log_groups."
+    }
+  }
 }
