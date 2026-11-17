@@ -32,3 +32,13 @@ output "dashboard_arns" {
   description = "Dashboard ARNs"
   value       = module.cloudwatch.dashboard_arns
 }
+
+output "log_stream_names" {
+  description = "Log stream names"
+  value       = module.cloudwatch.log_stream_names
+}
+
+output "dashboard_names" {
+  description = "Dashboard names"
+  value       = module.cloudwatch.dashboard_names
+}

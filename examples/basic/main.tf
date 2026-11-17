@@ -1,12 +1,12 @@
 provider "aws" {
-  region = "us-east-1"
+  region = var.aws_region
 }
 
 module "cloudwatch" {
   source = "../../cloudwatch"
 
-  account_name = "dev"
-  project_name = "myapp"
+  account_name = var.account_name
+  project_name = var.project_name
 
   # =============================================================================
   # Log Groups
@@ -40,7 +40,7 @@ module "cloudwatch" {
     }
   }
 
-  tags = {
+  tags_common = {
     Environment = "dev"
     Terraform   = "true"
   }
